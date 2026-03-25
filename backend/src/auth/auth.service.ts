@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomBytes } from 'crypto';
@@ -13,6 +13,7 @@ export class AuthService {
     { expiresAt: number; used: boolean }
   >();
   private readonly TTL_MS = 5 * 60 * 1000; // 5 minutes
+  private readonly logger = new Logger(AuthService.name);
 
   constructor(
     private readonly jwtService: JwtService,
@@ -24,6 +25,8 @@ export class AuthService {
     const timestamp = Date.now();
     const random = randomBytes(16).toString('hex');
     const challenge = `InsightArena:nonce:${timestamp}:${random}:${stellar_address}`;
+
+    this.logger.debug(`Generating challenge for ${stellar_address}: ${challenge}`);
 
     this.challengeCache.set(challenge, {
       expiresAt: timestamp + this.TTL_MS,
@@ -55,18 +58,24 @@ export class AuthService {
     stellar_address: string,
     signed_challenge: string,
   ): Promise<{ access_token: string; user: User }> {
+    this.logger.debug(`Verifying challenge for ${stellar_address}`);
+
     // Find a valid, unused challenge for this address
     const challenge = this.findValidChallengeForAddress(stellar_address);
     if (!challenge) {
+      this.logger.debug(`No valid challenge found for ${stellar_address}`);
       throw new UnauthorizedException(
         'No valid challenge found or challenge expired',
       );
     }
 
+    this.logger.debug(`Found challenge: ${challenge}`);
+
     const entry = this.challengeCache.get(challenge)!;
 
     // Replay attack prevention: reject already-used nonces
     if (entry.used) {
+      this.logger.debug(`Challenge already used for ${stellar_address}`);
       throw new UnauthorizedException('Challenge already used');
     }
 
@@ -76,6 +85,8 @@ export class AuthService {
       challenge,
       signed_challenge,
     );
+
+    this.logger.debug(`Signature valid: ${isValid}`);
 
     if (!isValid) {
       throw new UnauthorizedException('Invalid signature');
@@ -87,6 +98,7 @@ export class AuthService {
     // Upsert the user record
     let user = await this.usersRepository.findOneBy({ stellar_address });
     if (!user) {
+      this.logger.debug(`Creating new user for ${stellar_address}`);
       user = this.usersRepository.create({ stellar_address });
     }
     user = await this.usersRepository.save(user);
@@ -128,8 +140,10 @@ export class AuthService {
       const keypair = Keypair.fromPublicKey(stellar_address);
       const messageBuffer = Buffer.from(challenge, 'utf-8');
       const signatureBuffer = Buffer.from(signed_challenge, 'hex');
-      return keypair.verify(messageBuffer, signatureBuffer);
-    } catch {
+      const isValid = keypair.verify(messageBuffer, signatureBuffer);
+      return isValid;
+    } catch (error) {
+      this.logger.error(`Error verifying signature: ${error}`);
       return false;
     }
   }
