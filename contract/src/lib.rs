@@ -148,6 +148,49 @@ impl InsightArenaContract {
     ) -> Result<Prediction, InsightArenaError> {
         prediction::get_prediction(&env, market_id, predictor)
     }
+
+    /// Lightweight boolean check: has `predictor` already submitted a
+    /// prediction on `market_id`?
+    ///
+    /// Does not load the full `Prediction` struct — only tests key existence.
+    /// Never panics; returns `false` for non-existent markets or predictors.
+    pub fn has_predicted(env: Env, market_id: u64, predictor: Address) -> bool {
+        prediction::has_predicted(&env, market_id, predictor)
+    }
+
+    /// Return all [`Prediction`] records for a given market.
+    ///
+    /// Iterates the `PredictorList(market_id)` and fetches each prediction.
+    /// Returns an empty `Vec` when the market has no predictions or does not
+    /// exist. TTLs are extended for every record accessed.
+    pub fn list_market_predictions(env: Env, market_id: u64) -> Vec<Prediction> {
+        prediction::list_market_predictions(&env, market_id)
+    }
+
+    /// Claim a resolved-market payout for `predictor`.
+    ///
+    /// Reverts when the market is unresolved, the caller did not predict the
+    /// winning outcome, or a payout for this `(market_id, predictor)` has
+    /// already been claimed.
+    pub fn claim_payout(
+        env: Env,
+        predictor: Address,
+        market_id: u64,
+    ) -> Result<i128, InsightArenaError> {
+        prediction::claim_payout(&env, predictor, market_id)
+    }
+
+    /// Batch distribute payouts for all unclaimed winning predictions in a
+    /// resolved market. Callable only by admin or oracle.
+    ///
+    /// Returns the number of winner payouts processed in this invocation.
+    pub fn batch_distribute_payouts(
+        env: Env,
+        caller: Address,
+        market_id: u64,
+    ) -> Result<u32, InsightArenaError> {
+        prediction::batch_distribute_payouts(&env, caller, market_id)
+    }
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────

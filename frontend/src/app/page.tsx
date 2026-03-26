@@ -11,6 +11,8 @@ import ReputationSection from "@/component/Homepage/ReputationSection";
 import Faq from "@/component/Homepage/Faq";
 import Feature from "@/component/Homepage/Feature";
 import ComparisonSection from "@/component/Homepage/ComparisonSection";
+import TransparentGrid from "@/component/Homepage/Transparent";
+import StatisticsSection from "@/component/Homepage/StatisticsSection";
 
 export default function Home() {
   return (
@@ -69,9 +71,11 @@ export default function Home() {
           <Header />
           <HeroSection />
           <ReputationSection />
-<Feature />
+          <Feature />
           <HowItWorksSection />
           <ComparisonSection />
+          <TransparentGrid />
+          <StatisticsSection />
           <Faq />
           <Footer />
         </div>

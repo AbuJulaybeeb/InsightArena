@@ -12,6 +12,10 @@ import { RolesGuard } from './common/guards/roles.guard';
 import { validate } from './config/env.validation';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { MarketsModule } from './markets/markets.module';
+import { PredictionsModule } from './predictions/predictions.module';
+import { CompetitionsModule } from './competitions/competitions.module';
+import { LeaderboardModule } from './leaderboard/leaderboard.module';
 
 @Module({
   imports: [
@@ -38,6 +42,10 @@ import { UsersModule } from './users/users.module';
     HealthModule,
     AuthModule,
     UsersModule,
+    MarketsModule,
+    PredictionsModule,
+    CompetitionsModule,
+    LeaderboardModule,
     CommonModule,
   ],
 

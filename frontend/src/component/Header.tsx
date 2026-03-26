@@ -4,6 +4,13 @@ import Link from "next/link";
 import { Search, Bell } from "lucide-react";
 
 export default function Header() {
+  const navLinks = [
+    { name: "Home", link: "/" },
+    { name: "Events", link: "/events" },
+    { name: "Leaderboard", link: "/lead" },
+    { name: "Docs", link: "/docs" },
+    { name: "Dashboard", link: "/dashboard" },
+  ];
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-[#020617]/80 backdrop-blur-md border-b border-gray-800">
       <div className="max-w-7xl mx-auto px-6 py-4">
@@ -12,17 +19,16 @@ export default function Header() {
             <Link href="/" className="text-cyan-400 font-black text-2xl tracking-tighter">
               InsightArena
             </Link>
-            
-            <div className="hidden lg:flex items-center space-x-8">
-              {["Platform", "Events", "Competitions", "Leaderboard", "Resources"].map((item) => (
+          </div>
+          <div>
+            <div className="hidden md:flex items-center space-x-6">
+              {navLinks.map((link) => (
                 <Link
-                  key={item}
-                  href={item === "Events" ? "/events" : "/"}
-                  className={`text-sm font-bold transition-colors ${
-                    item === "Events" ? "text-cyan-400" : "text-gray-400 hover:text-white"
-                  }`}
+                  key={link.name}
+                  href={link.link}
+                  className="text-gray-300 hover:text-white transition-colors"
                 >
-                  {item}
+                  {link.name}
                 </Link>
               ))}
             </div>

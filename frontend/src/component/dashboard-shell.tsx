@@ -1,6 +1,7 @@
 "use client";
 
 import RewardsWalletCard from "@/component/RewardsWalletCard";
+import NotificationsCard from "@/component/NotificationsCard";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -114,7 +115,7 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
 
 function TopNavigation() {
   return (
-    <section className="border-b border-white/8 px-5 py-6 sm:px-8 lg:px-10">
+    <section className="border-b border-white/8 px-5 py-4 sm:px-8 lg:px-10">
       <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight sm:text-[2.45rem]">
@@ -186,9 +187,12 @@ export function DashboardShell({ children }: DashboardShellProps) {
           <div className="flex gap-6 p-6">
             <main className="flex-1">{children}</main>
 
-            <aside className="xl:block w-[300px]">
-              <RewardsWalletCard />
-            </aside>
+            {pathname === "/dashboard" && (
+              <aside className="xl:block w-[300px] space-y-6">
+                <RewardsWalletCard />
+                <NotificationsCard />
+              </aside>
+            )}
           </div>
         </div>
       </div>
