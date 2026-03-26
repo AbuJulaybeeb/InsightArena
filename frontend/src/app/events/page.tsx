@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Search, Filter, ChevronDown } from "lucide-react";
 import Header from "@/component/Header";
 import Footer from "@/component/Footer";
+import FeaturedEvents from "@/component/events/FeaturedEvents";
+import { CompetitionCard, ICompetition } from "@/component/competitions/CompetitionCard";
 
 export default function EventsPage() {
   const [activeTab, setActiveTab] = useState("all");
@@ -178,8 +180,26 @@ export default function EventsPage() {
               </div>
             </div>
 
-            {/* Events Grid */}
-           
+            {/* Featured Events Section */}
+            <FeaturedEvents />
+
+            {/* Open Competitions Section */}
+            <div className="space-y-6 pt-8">
+              <div className="flex items-center justify-between">
+                <h2 className="text-white font-bold text-2xl tracking-tight">
+                  Open Competitions
+                </h2>
+                <span className="text-purple-500 text-xs font-medium cursor-pointer hover:underline uppercase tracking-widest">
+                  Limited Time Offers
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+                {MOCK_COMPETITIONS.map((competition) => (
+                  <CompetitionCard key={competition.id} competition={competition} />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -188,3 +208,67 @@ export default function EventsPage() {
     </div>
   );
 }
+
+// Mock Data based on Acceptance Criteria & Screenshot
+const MOCK_COMPETITIONS: ICompetition[] = [
+  {
+    id: "comp_1",
+    tag: "Spot Trading",
+    prizePool: 100000,
+    title: "Quarterly Trading Championship",
+    features: ["Minimum 10 trades", "KYC verified", "Portfolio > $1,000"],
+    currentParticipants: 847,
+    maxParticipants: 1000,
+    endTime: new Date(Date.now() + 1075500000).toISOString(), 
+  },
+  {
+    id: "comp_2",
+    tag: "Futures",
+    prizePool: 75000,
+    title: "Leverage Masters Contest",
+    features: ["Futures experience", "Risk score > 70", "Active for 30 days"],
+    currentParticipants: 623,
+    maxParticipants: 800,
+    endTime: new Date(Date.now() + 742500000).toISOString(), 
+  },
+  {
+    id: "comp_3",
+    tag: "Copy Trading",
+    prizePool: 50000,
+    title: "Top Signal Provider Challenge",
+    features: ["100+ followers", "Positive ROI", "Verified track record"],
+    currentParticipants: 450,
+    maxParticipants: 500,
+    endTime: new Date(Date.now() + 1325520000).toISOString(), 
+  },
+  {
+    id: "comp_4",
+    tag: "Arbitrage",
+    prizePool: 60000,
+    title: "Cross-Exchange Arbitrage Battle",
+    features: ["Multi-exchange access", "API integration", "Advanced tier"],
+    currentParticipants: 389,
+    maxParticipants: 500,
+    endTime: new Date(Date.now() + 937550000).toISOString(), 
+  },
+  {
+    id: "comp_5",
+    tag: "Portfolio",
+    prizePool: 40000,
+    title: "Balanced Portfolio Competition",
+    features: ["Diversified holdings", "3 month history", "Risk management"],
+    currentParticipants: 734,
+    maxParticipants: 1000,
+    endTime: new Date(Date.now() + 1245500000).toISOString(), 
+  },
+  {
+    id: "comp_6",
+    tag: "Swing Trading",
+    prizePool: 55000,
+    title: "Mid-Term Strategy Contest",
+    features: ["Hold time > 24h", "Max 20 positions", "Verified account"],
+    currentParticipants: 512,
+    maxParticipants: 650,
+    endTime: new Date(Date.now() + 854500000).toISOString(), 
+  },
+];
