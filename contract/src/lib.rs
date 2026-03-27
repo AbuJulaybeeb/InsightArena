@@ -731,4 +731,7 @@ mod leaderboard_tests {
 mod invite_tests;
 
 #[cfg(test)]
+mod market_tests;
+
+#[cfg(test)]
 mod prediction_tests;
