@@ -21,10 +21,7 @@ pub fn add_volume(env: &Env, amount: i128) {
 
 /// Accumulate per-outcome stake pools by iterating the predictor list.
 /// Returns parallel vecs: `(outcome_symbols, outcome_pools)`.
-fn accumulate_outcome_pools(
-    env: &Env,
-    market_id: u64,
-) -> (Vec<Symbol>, Vec<i128>) {
+fn accumulate_outcome_pools(env: &Env, market_id: u64) -> (Vec<Symbol>, Vec<i128>) {
     let predictors: Vec<Address> = env
         .storage()
         .persistent()
@@ -96,11 +93,7 @@ pub fn get_outcome_distribution(
     env: Env,
     market_id: u64,
 ) -> Result<Vec<(Symbol, i128)>, InsightArenaError> {
-    if !env
-        .storage()
-        .persistent()
-        .has(&DataKey::Market(market_id))
-    {
+    if !env.storage().persistent().has(&DataKey::Market(market_id)) {
         return Err(InsightArenaError::MarketNotFound);
     }
 

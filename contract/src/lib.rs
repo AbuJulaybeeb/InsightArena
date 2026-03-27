@@ -395,10 +395,7 @@ impl InsightArenaContract {
     // ── Analytics ─────────────────────────────────────────────────────────────
 
     /// Return aggregated stats for a single market.
-    pub fn get_market_stats(
-        env: Env,
-        market_id: u64,
-    ) -> Result<MarketStats, InsightArenaError> {
+    pub fn get_market_stats(env: Env, market_id: u64) -> Result<MarketStats, InsightArenaError> {
         analytics::get_market_stats(env, market_id)
     }
 
@@ -411,10 +408,7 @@ impl InsightArenaContract {
     }
 
     /// Return the stored `UserProfile` for a given address.
-    pub fn get_user_stats(
-        env: Env,
-        user: Address,
-    ) -> Result<UserProfile, InsightArenaError> {
+    pub fn get_user_stats(env: Env, user: Address) -> Result<UserProfile, InsightArenaError> {
         analytics::get_user_stats(env, user)
     }
 
