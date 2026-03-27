@@ -306,6 +306,18 @@ impl InsightArenaContract {
         escrow::get_treasury_balance(&env)
     }
 
+    /// Withdraw an amount from the accumulated protocol treasury.
+    ///
+    /// Caller must be the configured admin.
+    pub fn withdraw_treasury(
+        env: Env,
+        admin: Address,
+        to: Address,
+        amount: i128,
+    ) -> Result<(), InsightArenaError> {
+        escrow::transfer_fee(&env, &admin, &to, amount)
+    }
+
     // ── Invite ────────────────────────────────────────────────────────────────
 
     /// Generate a unique 8-character invite code for a private market.
@@ -691,6 +703,9 @@ mod leaderboard_tests {
 
 #[cfg(test)]
 mod prediction_tests;
+
+#[cfg(test)]
+mod escrow_tests;
 
 #[cfg(test)]
 mod invite_tests;
