@@ -281,7 +281,10 @@ mod tests {
         let invitee = Address::generate(&env);
 
         let result = client.try_redeem_invite_code(&invitee, &Symbol::new(&env, "deadbeef"));
-        assert!(matches!(result, Err(Ok(InsightArenaError::InvalidInviteCode))));
+        assert!(matches!(
+            result,
+            Err(Ok(InsightArenaError::InvalidInviteCode))
+        ));
     }
 
     #[test]
@@ -304,7 +307,10 @@ mod tests {
         });
 
         let result = client.try_redeem_invite_code(&invitee, &code);
-        assert!(matches!(result, Err(Ok(InsightArenaError::InvalidInviteCode))));
+        assert!(matches!(
+            result,
+            Err(Ok(InsightArenaError::InvalidInviteCode))
+        ));
     }
 
     #[test]
@@ -317,7 +323,10 @@ mod tests {
         env.ledger().set_timestamp(env.ledger().timestamp() + 10);
 
         let result = client.try_redeem_invite_code(&invitee, &code);
-        assert!(matches!(result, Err(Ok(InsightArenaError::InviteCodeExpired))));
+        assert!(matches!(
+            result,
+            Err(Ok(InsightArenaError::InviteCodeExpired))
+        ));
     }
 
     #[test]
@@ -331,6 +340,9 @@ mod tests {
         client.redeem_invite_code(&invitee1, &code);
 
         let result = client.try_redeem_invite_code(&invitee2, &code);
-        assert!(matches!(result, Err(Ok(InsightArenaError::InviteCodeMaxUsed))));
+        assert!(matches!(
+            result,
+            Err(Ok(InsightArenaError::InviteCodeMaxUsed))
+        ));
     }
 }

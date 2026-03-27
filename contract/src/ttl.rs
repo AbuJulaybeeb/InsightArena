@@ -54,7 +54,11 @@ pub fn extend_season_ttl(env: &Env, season_id: u32) {
         LEDGER_BUMP_PERMANENT,
     );
 
-    if env.storage().persistent().has(&DataKey::Leaderboard(season_id)) {
+    if env
+        .storage()
+        .persistent()
+        .has(&DataKey::Leaderboard(season_id))
+    {
         env.storage().persistent().extend_ttl(
             &DataKey::Leaderboard(season_id),
             threshold(LEDGER_BUMP_PERMANENT),
