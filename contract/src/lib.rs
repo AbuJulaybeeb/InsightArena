@@ -359,6 +359,15 @@ impl InsightArenaContract {
         invite::redeem_invite_code(env, invitee, code)
     }
 
+    /// Revoke an invite code so it can no longer be redeemed.
+    pub fn revoke_invite_code(
+        env: Env,
+        creator: Address,
+        code: Symbol,
+    ) -> Result<(), InsightArenaError> {
+        invite::revoke_invite_code(env, creator, code)
+    }
+
     /// List all season IDs which have snapshots available.
     pub fn list_snapshot_seasons(env: Env) -> Vec<u32> {
         env.storage()
@@ -711,3 +720,6 @@ mod invite_tests;
 
 #[cfg(test)]
 mod prediction_tests;
+
+#[cfg(test)]
+mod invite_tests;
