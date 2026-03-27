@@ -12,20 +12,74 @@ pub enum DataKey {
     Prediction(u64, Address),
     /// Keyed by user address. Represents an individual user's profile or state.
     User(Address),
+    /// Singleton list of all addresses that have a persisted user profile.
+    UserList,
     /// Keyed by season_id. Stores the leaderboard rankings per season.
-    Leaderboard(u64),
+    Leaderboard(u32),
+    /// Singleton. Stores the list of season IDs that have snapshots available.
+    SnapshotSeasonList,
     /// Keyed by season number. Represents a season's metadata and schedule.
     Season(u32),
+    /// Singleton. Stores the currently active season identifier.
+    ActiveSeason,
     /// Keyed by code symbol. Maps an invite code to its underlying metadata.
     InviteCode(Symbol),
+    /// Keyed by market_id. Stores the set-like list of addresses approved for private markets.
+    MarketAllowlist(u64),
     /// Singleton. Holds global configuration for the platform.
     Config,
+    /// Singleton. Tracks cumulative protocol fees accrued to treasury.
+    Treasury,
     /// Global counter. Tracks the total number of markets created.
     MarketCount,
     /// Global counter. Tracks the total number of seasons.
     SeasonCount,
     /// Emergency pause flag. Used to halt sensitive operations across the platform.
     Paused,
+    /// Singleton category whitelist stored in instance storage.
+    Categories,
+    /// Keyed by category symbol. Stores market IDs in creation order for that category.
+    CategoryIndex(Symbol),
+    /// Keyed by proposal_id. Stores governance proposal metadata/state.
+    Proposal(u32),
+    /// Singleton counter. Tracks the total number of governance proposals.
+    ProposalCount,
+    /// Keyed by (proposal_id, voter). Tracks whether a voter has voted on a proposal.
+    ProposalVote(u32, Address),
+    /// Temporary storage lock for escrow operations (prevents reentrancy)
+    EscrowLock,
+    /// Keyed by creator address. Tracks market creation/resolution stats for reputation.
+    CreatorStats(Address),
+    /// Singleton. Tracks cumulative XLM volume staked across all predictions.
+    PlatformVolume,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct MarketStats {
+    pub total_pool: i128,
+    pub participant_count: u32,
+    pub leading_outcome: Symbol,
+    pub leading_outcome_pool: i128,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PlatformStats {
+    pub total_markets: u64,
+    pub total_volume_xlm: i128,
+    pub active_users: u32,
+    pub treasury_balance: i128,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CreatorStats {
+    pub markets_created: u32,
+    pub markets_resolved: u32,
+    pub average_participant_count: u32,
+    pub dispute_count: u32,
+    pub reputation_score: u32,
 }
 
 #[contracttype]
@@ -245,6 +299,32 @@ impl Season {
             top_winner: None,
         }
     }
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct LeaderboardEntry {
+    pub rank: u32,
+    pub user: Address,
+    pub points: u32,
+    pub correct_predictions: u32,
+    pub total_predictions: u32,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct LeaderboardSnapshot {
+    pub season_id: u32,
+    pub updated_at: u64,
+    pub entries: Vec<LeaderboardEntry>,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RewardPayout {
+    pub rank: u32,
+    pub user: Address,
+    pub amount: i128,
 }
 
 #[contracttype]

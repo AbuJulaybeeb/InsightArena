@@ -4,8 +4,7 @@ import { useState } from "react";
 import { Search, Filter, ChevronDown } from "lucide-react";
 import Header from "@/component/Header";
 import Footer from "@/component/Footer";
-import FeaturedEvents from "@/component/events/FeaturedEvents";
-import { CompetitionCard, ICompetition } from "@/component/competitions/CompetitionCard";
+import WhyJoinValueGrid from "@/component/events/WhyJoinValueGrid";
 
 export default function EventsPage() {
   const [activeTab, setActiveTab] = useState("all");
@@ -180,28 +179,11 @@ export default function EventsPage() {
               </div>
             </div>
 
-            {/* Featured Events Section */}
-            <FeaturedEvents />
-
-            {/* Open Competitions Section */}
-            <div className="space-y-6 pt-8">
-              <div className="flex items-center justify-between">
-                <h2 className="text-white font-bold text-2xl tracking-tight">
-                  Open Competitions
-                </h2>
-                <span className="text-purple-500 text-xs font-medium cursor-pointer hover:underline uppercase tracking-widest">
-                  Limited Time Offers
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
-                {MOCK_COMPETITIONS.map((competition) => (
-                  <CompetitionCard key={competition.id} competition={competition} />
-                ))}
-              </div>
-            </div>
+            {/* Events Grid */}
           </div>
         </div>
+
+        <WhyJoinValueGrid />
 
         <Footer />
       </div>

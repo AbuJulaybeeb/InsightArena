@@ -3,6 +3,7 @@ use soroban_sdk::{Address, Env, Symbol};
 use crate::config;
 use crate::errors::InsightArenaError;
 use crate::market;
+use crate::reputation;
 use crate::storage_types::DataKey;
 
 /// Transition a market into the "resolved" state by recording the winning outcome.
@@ -72,13 +73,26 @@ pub fn resolve_market(
     // ── Emit MarketResolved event ─────────────────────────────────────────────
     market::emit_market_resolved(&env, market_id, resolved_outcome);
 
+    // ── Update creator reputation stats ──────────────────────────────────────
+    reputation::on_market_resolved(&env, &market.creator, market.participant_count);
+
+    Ok(())
+}
+
+pub fn update_oracle_from_governance(
+    env: &Env,
+    new_oracle: Address,
+) -> Result<(), InsightArenaError> {
+    let mut cfg = config::get_config(env)?;
+    cfg.oracle_address = new_oracle;
+    env.storage().persistent().set(&DataKey::Config, &cfg);
     Ok(())
 }
 
 #[cfg(test)]
 mod resolve_tests {
     use soroban_sdk::testutils::{Address as _, Ledger as _};
-    use soroban_sdk::{symbol_short, vec, Address, Env, String};
+    use soroban_sdk::{symbol_short, vec, Address, Env, String, Symbol};
 
     use crate::market::CreateMarketParams;
     use crate::{InsightArenaContract, InsightArenaContractClient, InsightArenaError};
@@ -105,7 +119,7 @@ mod resolve_tests {
         CreateMarketParams {
             title: String::from_str(env, "Will it rain?"),
             description: String::from_str(env, "Daily weather market"),
-            category: symbol_short!("weather"),
+            category: Symbol::new(env, "Sports"),
             outcomes: vec![env, symbol_short!("yes"), symbol_short!("no")],
             end_time: now + 1000,
             resolution_time: now + 2000,
