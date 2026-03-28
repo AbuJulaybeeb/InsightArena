@@ -20,6 +20,7 @@ import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SorobanModule } from './soroban/soroban.module';
 import { SeasonsModule } from './seasons/seasons.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 import { LoggerModule } from 'nestjs-pino';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 
@@ -70,6 +71,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
     PredictionsModule,
     CompetitionsModule,
     SeasonsModule,
+    AnalyticsModule,
     LeaderboardModule,
     NotificationsModule,
     SorobanModule,

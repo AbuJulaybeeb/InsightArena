@@ -11,6 +11,11 @@ export interface SorobanCreateMarketResult {
   tx_hash: string;
 }
 
+export interface SorobanCreateSeasonResult {
+  on_chain_season_id: number;
+  tx_hash: string;
+}
+
 export interface SorobanRpcEvent {
   id: string;
   ledger: number;
@@ -84,6 +89,31 @@ export class SorobanService {
         .slice(0, 64);
 
       return Promise.resolve({ market_id, tx_hash });
+    });
+  }
+
+  /**
+   * Create a season on the Soroban contract (admin flow).
+   * Stub implementation until real contract invocations are wired via stellar-sdk.
+   */
+  async createSeason(
+    startTimeUnix: number,
+    endTimeUnix: number,
+    rewardPoolStroops: string,
+  ): Promise<SorobanCreateSeasonResult> {
+    return this.withSorobanErrorHandling('createSeason', () => {
+      this.logger.log(
+        `Soroban createSeason: start=${startTimeUnix} end=${endTimeUnix} pool=${rewardPoolStroops}`,
+      );
+      const mix = (BigInt(startTimeUnix) ^ BigInt(endTimeUnix)) & BigInt(0x7fffffff);
+      const on_chain_season_id = mix === 0n ? 1 : Number(mix);
+      const tx_hash = Buffer.from(
+        `season:${startTimeUnix}:${endTimeUnix}:${rewardPoolStroops}`,
+      )
+        .toString('hex')
+        .padEnd(64, '0')
+        .slice(0, 64);
+      return Promise.resolve({ on_chain_season_id, tx_hash });
     });
   }
 
