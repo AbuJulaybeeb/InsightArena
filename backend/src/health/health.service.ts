@@ -1,8 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { HealthCheckService, HttpHealthIndicator, TypeOrmHealthIndicator, DiskHealthIndicator, HealthCheck } from '@nestjs/terminus';
+import {
+  DiskHealthIndicator,
+  HealthCheck,
+  HealthCheckService,
+  HttpHealthIndicator,
+  TypeOrmHealthIndicator,
+} from '@nestjs/terminus';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
 import * as os from 'os';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class HealthService {

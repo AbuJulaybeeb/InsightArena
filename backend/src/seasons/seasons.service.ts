@@ -1,15 +1,15 @@
 import {
-  Injectable,
   ConflictException,
-  NotFoundException,
+  Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
-import { Season } from './entities/season.entity';
-import { User } from '../users/entities/user.entity';
-import { NotificationsService } from '../notifications/notifications.service';
+import { DataSource, Repository } from 'typeorm';
 import { NotificationType } from '../notifications/entities/notification.entity';
+import { NotificationsService } from '../notifications/notifications.service';
+import { User } from '../users/entities/user.entity';
+import { Season } from './entities/season.entity';
 
 @Injectable()
 export class SeasonsService {

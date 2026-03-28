@@ -1,8 +1,13 @@
+import {
+  DiskHealthIndicator,
+  HealthCheckService,
+  HttpHealthIndicator,
+  TypeOrmHealthIndicator,
+} from '@nestjs/terminus';
 import { Test, TestingModule } from '@nestjs/testing';
+import { getDataSourceToken } from '@nestjs/typeorm';
 import { HealthController } from './health.controller';
 import { HealthService } from './health.service';
-import { HealthCheckService, HttpHealthIndicator, TypeOrmHealthIndicator, DiskHealthIndicator } from '@nestjs/terminus';
-import { getDataSourceToken } from '@nestjs/typeorm';
 
 describe('HealthController', () => {
   let controller: HealthController;

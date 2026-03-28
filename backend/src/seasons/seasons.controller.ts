@@ -1,14 +1,21 @@
-import { Controller, Get, Post, Param, HttpCode, HttpStatus } from '@nestjs/common';
 import {
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiTags,
-  ApiBearerAuth,
 } from '@nestjs/swagger';
-import { Season } from './entities/season.entity';
-import { SeasonsService } from './seasons.service';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../common/enums/role.enum';
+import { Season } from './entities/season.entity';
+import { SeasonsService } from './seasons.service';
 
 @ApiTags('Seasons')
 @Controller('seasons')

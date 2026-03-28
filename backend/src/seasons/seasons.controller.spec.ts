@@ -1,12 +1,12 @@
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
+import { NotificationsService } from '../notifications/notifications.service';
+import { User } from '../users/entities/user.entity';
+import { Season } from './entities/season.entity';
 import { SeasonsController } from './seasons.controller';
 import { SeasonsService } from './seasons.service';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Season } from './entities/season.entity';
-import { User } from '../users/entities/user.entity';
-import { NotificationsService } from '../notifications/notifications.service';
-import { ConflictException, NotFoundException } from '@nestjs/common';
-import { DataSource } from 'typeorm';
 
 describe('SeasonsController', () => {
   let controller: SeasonsController;
@@ -166,9 +166,9 @@ describe('SeasonsController', () => {
       const queryRunner = mockDataSource.createQueryRunner();
       queryRunner.manager.findOne.mockResolvedValue(null);
 
-      await expect(
-        controller.finalizeSeason('non-existent'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(controller.finalizeSeason('non-existent')).rejects.toThrow(
+        NotFoundException,
+      );
       expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
     });
 
@@ -179,9 +179,9 @@ describe('SeasonsController', () => {
         is_finalized: true,
       });
 
-      await expect(
-        controller.finalizeSeason('season-123'),
-      ).rejects.toThrow(ConflictException);
+      await expect(controller.finalizeSeason('season-123')).rejects.toThrow(
+        ConflictException,
+      );
       expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
     });
 

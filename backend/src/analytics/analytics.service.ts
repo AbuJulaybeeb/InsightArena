@@ -3,7 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Market } from '../markets/entities/market.entity';
 import { Prediction } from '../predictions/entities/prediction.entity';
-import { MarketAnalyticsDto, OutcomeDistributionDto } from './dto/market-analytics.dto';
+import {
+  MarketAnalyticsDto,
+  OutcomeDistributionDto,
+} from './dto/market-analytics.dto';
 
 @Injectable()
 export class AnalyticsService {
@@ -53,7 +56,8 @@ export class AnalyticsService {
     const outcomeDistribution: OutcomeDistributionDto[] = Array.from(
       outcomeCounts.entries(),
     ).map(([outcome, count]) => {
-      const percentage = total > 0 ? Math.round((count / total) * 100 * 100) / 100 : 0;
+      const percentage =
+        total > 0 ? Math.round((count / total) * 100 * 100) / 100 : 0;
       return {
         outcome,
         count,
@@ -64,7 +68,10 @@ export class AnalyticsService {
     // Calculate time remaining in seconds
     const now = new Date().getTime();
     const endTime = new Date(market.end_time).getTime();
-    const timeRemainingSeconds = Math.max(0, Math.floor((endTime - now) / 1000));
+    const timeRemainingSeconds = Math.max(
+      0,
+      Math.floor((endTime - now) / 1000),
+    );
 
     this.logger.log(
       `Market analytics retrieved for "${market.title}" (${market.id}) - ${predictions.length} predictions`,
