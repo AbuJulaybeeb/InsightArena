@@ -5,6 +5,7 @@ import { Search, Filter, ChevronDown } from "lucide-react";
 import Header from "@/component/Header";
 import Footer from "@/component/Footer";
 import WhyJoinValueGrid from "@/component/events/WhyJoinValueGrid";
+import { ICompetition } from "@/component/competitions/CompetitionCard";
 
 export default function EventsPage() {
   const [activeTab, setActiveTab] = useState("all");
