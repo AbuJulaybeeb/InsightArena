@@ -4,6 +4,7 @@ use crate::analytics;
 use crate::config::{self, PERSISTENT_BUMP, PERSISTENT_THRESHOLD};
 use crate::errors::InsightArenaError;
 use crate::escrow;
+use crate::leaderboard;
 use crate::season;
 use crate::storage_types::{DataKey, Market, Prediction, UserProfile};
 use crate::ttl;
@@ -110,10 +111,11 @@ fn compute_payout_breakdown(
     Ok((net_payout, protocol_fee, creator_fee))
 }
 
-fn update_winner_profile(
+fn apply_winner_payout(
     env: &Env,
     predictor: &Address,
     net_payout: i128,
+    stake_amount: i128,
 ) -> Result<(), InsightArenaError> {
     let user_key = DataKey::User(predictor.clone());
     let mut profile: UserProfile = env
@@ -127,16 +129,19 @@ fn update_winner_profile(
         .checked_add(net_payout)
         .ok_or(InsightArenaError::Overflow)?;
 
-    let points_i128 = net_payout
-        .checked_div(10_000_000)
+    profile.correct_predictions = profile
+        .correct_predictions
+        .checked_add(1)
         .ok_or(InsightArenaError::Overflow)?;
-    if points_i128 > u32::MAX as i128 {
-        return Err(InsightArenaError::Overflow);
-    }
 
+    let points = leaderboard::calculate_points(
+        stake_amount,
+        profile.correct_predictions,
+        profile.total_predictions,
+    );
     profile.season_points = profile
         .season_points
-        .checked_add(points_i128 as u32)
+        .checked_add(points)
         .ok_or(InsightArenaError::Overflow)?;
 
     env.storage().persistent().set(&user_key, &profile);
@@ -506,7 +511,6 @@ pub fn claim_payout(
         escrow::release_payout(env, &predictor, net_payout)?;
     }
     if protocol_fee > 0 {
-        escrow::refund(env, &cfg.admin, protocol_fee)?;
         escrow::add_to_treasury_balance(env, protocol_fee);
     }
     if creator_fee > 0 {
@@ -531,13 +535,16 @@ pub fn claim_payout(
         .checked_add(net_payout)
         .ok_or(InsightArenaError::Overflow)?;
 
-    let points_i128 = net_payout
-        .checked_div(10_000_000)
+    profile.correct_predictions = profile
+        .correct_predictions
+        .checked_add(1)
         .ok_or(InsightArenaError::Overflow)?;
-    if points_i128 > u32::MAX as i128 {
-        return Err(InsightArenaError::Overflow);
-    }
-    let points: u32 = points_i128 as u32;
+
+    let points = leaderboard::calculate_points(
+        prediction.stake_amount,
+        profile.correct_predictions,
+        profile.total_predictions,
+    );
     profile.season_points = profile
         .season_points
         .checked_add(points)
@@ -650,7 +657,6 @@ pub fn batch_distribute_payouts(
             escrow::release_payout(env, &stored_prediction.predictor, net_payout)?;
         }
         if protocol_fee > 0 {
-            escrow::refund(env, &cfg.admin, protocol_fee)?;
             escrow::add_to_treasury_balance(env, protocol_fee);
         }
         if creator_fee > 0 {
@@ -665,7 +671,12 @@ pub fn batch_distribute_payouts(
             .set(&prediction_key, &stored_prediction);
         ttl::shorten_prediction_ttl_after_claim(env, market_id, &stored_prediction.predictor);
 
-        update_winner_profile(env, &stored_prediction.predictor, net_payout)?;
+        apply_winner_payout(
+            env,
+            &stored_prediction.predictor,
+            net_payout,
+            stored_prediction.stake_amount,
+        )?;
 
         processed = processed
             .checked_add(1)
@@ -677,4 +688,160 @@ pub fn batch_distribute_payouts(
     emit_batch_payout_complete(env, market_id, &caller, processed);
 
     Ok(processed)
+}
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod prediction_tests {
+    use soroban_sdk::testutils::Address as _;
+    use soroban_sdk::token::StellarAssetClient;
+    use soroban_sdk::{symbol_short, vec, Address, Env, String, Symbol};
+
+    /* Removed unused import: crate::invite */
+    use crate::market::CreateMarketParams;
+    use crate::{InsightArenaContract, InsightArenaContractClient, InsightArenaError};
+
+    // ── Test helpers ──────────────────────────────────────────────────────────
+
+    fn register_token(env: &Env) -> Address {
+        let token_admin = Address::generate(env);
+        env.register_stellar_asset_contract_v2(token_admin)
+            .address()
+    }
+
+    /// Deploy and initialise the contract; return client + xlm_token address.
+    fn deploy(env: &Env) -> (InsightArenaContractClient<'_>, Address) {
+        let id = env.register(InsightArenaContract, ());
+        let client = InsightArenaContractClient::new(env, &id);
+        let admin = Address::generate(env);
+        let oracle = Address::generate(env);
+        let xlm_token = register_token(env);
+        env.mock_all_auths();
+        client.initialize(&admin, &oracle, &200_u32, &xlm_token);
+        (client, xlm_token)
+    }
+
+    fn default_params(env: &Env) -> CreateMarketParams {
+        let now = env.ledger().timestamp();
+        CreateMarketParams {
+            title: String::from_str(env, "Will it rain?"),
+            description: String::from_str(env, "Daily weather market"),
+            category: Symbol::new(env, "Sports"),
+            outcomes: vec![env, symbol_short!("yes"), symbol_short!("no")],
+            end_time: now + 1000,
+            resolution_time: now + 2000,
+            dispute_window: 86_400,
+            creator_fee_bps: 100,
+            min_stake: 10_000_000,
+            max_stake: 100_000_000,
+            is_public: true,
+        }
+    }
+
+    /// Mint `amount` XLM stroops to `recipient` using the stellar asset client.
+    fn fund(env: &Env, xlm_token: &Address, recipient: &Address, amount: i128) {
+        StellarAssetClient::new(env, xlm_token).mint(recipient, &amount);
+    }
+
+    // ── submit_prediction tests ───────────────────────────────────────────────
+    // ── Happy path ────────────────────────────────────────────────────────────
+
+    #[test]
+    fn submit_prediction_success() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, xlm_token) = deploy(&env);
+        let creator = Address::generate(&env);
+        let predictor = Address::generate(&env);
+
+        let market_id = client.create_market(&creator, &default_params(&env));
+        fund(&env, &xlm_token, &predictor, 20_000_000);
+
+        client.submit_prediction(
+            &predictor,
+            &market_id,
+            &symbol_short!("yes"),
+            &20_000_000_i128,
+        );
+
+        // Verify prediction stored correctly
+        let pred = env.as_contract(&client.address, || {
+            use crate::storage_types::{DataKey, Prediction};
+            env.storage()
+                .persistent()
+                .get::<DataKey, Prediction>(&DataKey::Prediction(market_id, predictor.clone()))
+                .unwrap()
+        });
+        assert_eq!(pred.market_id, market_id);
+        assert_eq!(pred.predictor, predictor);
+        assert_eq!(pred.chosen_outcome, symbol_short!("yes"));
+        assert_eq!(pred.stake_amount, 20_000_000);
+        assert!(!pred.payout_claimed);
+        assert_eq!(pred.payout_amount, 0);
+    }
+
+    // ── Task #237 Allowlist Tests ─────────────────────────────────────────────
+
+    /// (a) Public market: no allowlist check — anyone can predict
+    #[test]
+    fn submit_prediction_public_market_allows_any_predictor() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, xlm_token) = deploy(&env);
+        let creator = Address::generate(&env);
+        let predictor = Address::generate(&env);
+        let stake = 20_000_000_i128;
+
+        let mut params = default_params(&env);
+        params.is_public = true;
+        let market_id = client.create_market(&creator, &params);
+        fund(&env, &xlm_token, &predictor, stake);
+
+        client.submit_prediction(&predictor, &market_id, &symbol_short!("yes"), &stake);
+        assert!(client.has_predicted(&market_id, &predictor));
+    }
+
+    /// (b) Private market: unlisted predictor rejected with Unauthorized
+    #[test]
+    fn submit_prediction_private_market_rejects_unlisted() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, xlm_token) = deploy(&env);
+        let creator = Address::generate(&env);
+        let predictor = Address::generate(&env);
+        let stake = 20_000_000_i128;
+
+        let mut params = default_params(&env);
+        params.is_public = false;
+        let market_id = client.create_market(&creator, &params);
+        fund(&env, &xlm_token, &predictor, stake);
+
+        let result =
+            client.try_submit_prediction(&predictor, &market_id, &symbol_short!("yes"), &stake);
+        assert!(matches!(result, Err(Ok(InsightArenaError::Unauthorized))));
+        assert!(!client.has_predicted(&market_id, &predictor));
+    }
+
+    /// (c) Private market: allowlisted predictor (redeemed invite) accepted
+    #[test]
+    fn submit_prediction_private_market_accepts_allowlisted() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, xlm_token) = deploy(&env);
+        let creator = Address::generate(&env);
+        let predictor = Address::generate(&env);
+        let stake = 20_000_000_i128;
+
+        let mut params = default_params(&env);
+        params.is_public = false;
+        let market_id = client.create_market(&creator, &params);
+
+        let code = client.generate_invite_code(&creator, &market_id, &10, &3600_u64);
+        client.redeem_invite_code(&predictor, &code);
+        fund(&env, &xlm_token, &predictor, stake);
+
+        client.submit_prediction(&predictor, &market_id, &symbol_short!("yes"), &stake);
+        assert!(client.has_predicted(&market_id, &predictor));
+    }
 }
